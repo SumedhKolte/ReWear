@@ -1,0 +1,107 @@
+{
+  "auth": {
+    "validToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDEiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE2ODk2MDAwMDAsImV4cCI6MTY4OTY4NjQwMH0.test-signature",
+    "expiredToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDEiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE2ODk1MDAwMDAsImV4cCI6MTY4OTUwMDAwMX0.expired-signature",
+    "adminToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDMiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNjg5NjAwMDAwLCJleHAiOjE2ODk2ODY0MDB9.admin-signature"
+  },
+  "users": {
+    "validUserId": "550e8400-e29b-41d4-a716-446655440001",
+    "adminUserId": "550e8400-e29b-41d4-a716-446655440003",
+    "testUser": {
+      "userId": "550e8400-e29b-41d4-a716-446655440001",
+      "email": "john.doe@example.com",
+      "username": "johndoe",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "user"
+    }
+  },
+  "items": {
+    "validItemId": "660e8400-e29b-41d4-a716-446655440001",
+    "swappedItemId": "660e8400-e29b-41d4-a716-446655440008",
+    "testItem": {
+      "title": "Test iPhone 13",
+      "description": "Test description for iPhone 13",
+      "category": "Electronics",
+      "type": "Smartphone",
+      "size": "6.1 inch",
+      "condition": "Like New",
+      "tags": ["iPhone", "Apple", "test"],
+      "images": ["https://example.com/test1.jpg"],
+      "status": "Available"
+    },
+    "invalidItem": {
+      "title": "A",
+      "description": "Too short title",
+      "category": "InvalidCategory"
+    }
+  },
+  "search": {
+    "validQueries": [
+      "iPhone",
+      "laptop",
+      "Nike shoes",
+      "basketball",
+      "MacBook"
+    ],
+    "invalidQueries": [
+      "",
+      "a",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    ],
+    "filters": {
+      "electronics": {
+        "category": "Electronics",
+        "status": "Available"
+      },
+      "clothing": {
+        "category": "Clothing",
+        "condition": "Like New"
+      },
+      "complex": {
+        "category": "Electronics",
+        "type": "Smartphone",
+        "condition": "Like New",
+        "tags": ["iPhone", "Apple"],
+        "dateFrom": "2023-01-01",
+        "dateTo": "2023-12-31"
+      }
+    }
+  },
+  "categories": [
+    {
+      "name": "Electronics",
+      "description": "Electronic devices and gadgets"
+    },
+    {
+      "name": "Clothing",
+      "description": "Apparel and fashion items"
+    },
+    {
+      "name": "Books",
+      "description": "Books and educational materials"
+    },
+    {
+      "name": "Sports",
+      "description": "Sports equipment and gear"
+    }
+  ],
+  "apiKeys": {
+    "valid": "test-api-key-12345",
+    "invalid": "invalid-api-key"
+  },
+  "pagination": {
+    "default": {
+      "page": 1,
+      "limit": 20
+    },
+    "large": {
+      "page": 1,
+      "limit": 100
+    },
+    "invalid": {
+      "page": 0,
+      "limit": 101
+    }
+  }
+}
