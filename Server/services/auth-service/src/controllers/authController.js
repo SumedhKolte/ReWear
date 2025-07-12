@@ -40,7 +40,7 @@ exports.login = async (req, res) => {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = generateToken({ userId: user.userId, isAdmin: user.isAdmin });
+    const token = generateToken({ userId: user.userId,email: user.email, isAdmin: user.isAdmin });
     res.json({ token });
   } catch (err) {
     res.status(500).json({ error: 'Login failed', details: err.message });
