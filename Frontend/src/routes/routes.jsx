@@ -20,13 +20,10 @@ export default function AppRoutes() {
       <Route path="/signup" element={<Signup />} />   
       <Route path="/ItemListing" element={<ItemListingPage />} />   
       <Route path="/UserDashboard" element={<UserDashboard />} />    
-<<<<<<< HEAD
       <Route path="/Items" element={<Items />} />    
-=======
       <Route path="/ProductDetailPage" element={<ProductDetailPage />} />    
       <Route path="/AdminPanel" element={<AdminPanel />} />    
       <Route path="/SwapInterface" element={<SwapInterface />} />    
->>>>>>> f44d1db2f9ca9871a129134a09465279a5048ce1
     </Routes>
   //  <Items />
   );
