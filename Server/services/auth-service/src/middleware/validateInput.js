@@ -6,4 +6,4 @@ module.exports = function (schema) {
     }
     next();
   };
-};
+}; // ← This closing brace was missing

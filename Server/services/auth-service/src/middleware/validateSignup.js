@@ -12,6 +12,6 @@ const validate = (req, res, next) => {
     return res.status(400).json({ errors: errors.array() });
   }
   next();
-};
+}; // ← This closing brace was missing
 
 module.exports = { signupValidationRules, validate };
