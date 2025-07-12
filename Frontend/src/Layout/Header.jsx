@@ -8,15 +8,29 @@ const Header = ({ isMenuOpen, setIsMenuOpen }) => {
   const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // Check authentication status on component mount
+  // Check authentication status on component mount and when localStorage changes
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
+    const checkAuthStatus = () => {
+      const token = localStorage.getItem('authToken');
+      const userData = localStorage.getItem('userData');
+      
+      if (token && userData) {
+        setIsAuthenticated(true);
+        setUser(JSON.parse(userData));
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    };
+
+    checkAuthStatus();
+
+    // Listen for storage changes (useful for multiple tabs)
+    window.addEventListener('storage', checkAuthStatus);
     
-    if (token && userData) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(userData));
-    }
+    return () => {
+      window.removeEventListener('storage', checkAuthStatus);
+    };
   }, []);
 
   // Handle user account click
@@ -38,10 +52,10 @@ const Header = ({ isMenuOpen, setIsMenuOpen }) => {
     navigate('/');
   };
 
-  // Handle profile navigation
+  // Handle profile navigation - Updated to redirect to UserDashboard
   const handleProfile = () => {
     setShowUserMenu(false);
-    navigate('/profile');
+    navigate('/UserDashboard');
   };
 
   // Handle settings navigation
@@ -130,7 +144,7 @@ const Header = ({ isMenuOpen, setIsMenuOpen }) => {
                     className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 flex items-center space-x-2"
                   >
                     <User className="h-4 w-4" />
-                    <span>Profile</span>
+                    <span>Dashboard</span>
                   </button>
                   
                   <button
@@ -234,7 +248,7 @@ const Header = ({ isMenuOpen, setIsMenuOpen }) => {
                   onClick={() => { handleProfile(); setIsMenuOpen(false); }}
                   className="block w-full text-left py-2 text-stone-700 hover:text-orange-600 font-medium transition-colors"
                 >
-                  Profile
+                  Dashboard
                 </button>
                 <button
                   onClick={() => { handleSettings(); setIsMenuOpen(false); }}
