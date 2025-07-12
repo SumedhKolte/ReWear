@@ -27,7 +27,6 @@ const Dashboard = () => {
   const [editIndex, setEditIndex] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [priceCalculating, setPriceCalculating] = useState(false);
   const fileInputRef = useRef();
   const listingImageRef = useRef();
 
@@ -50,58 +49,47 @@ const Dashboard = () => {
     { value: "Poor", description: "Significant wear, may need repairs" }
   ];
 
-  // Enhanced API call function with proper authentication handling
+  // Enhanced API call function with better error handling
   const apiCall = async (endpoint, options = {}) => {
     const token = localStorage.getItem('authToken');
     
-    // Check if token exists for protected endpoints
     if (!token && !endpoint.includes('/health')) {
-      console.error('No authentication token found');
-      localStorage.clear();
-      window.location.href = '/signup';
-      return;
+      throw new Error('No authentication token found. Please login again.');
     }
     
-    // Prepare headers
-    const headers = {};
+    // Default headers
+    const defaultHeaders = {};
     
     // Add authorization header if token exists
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
     }
 
     // Only add Content-Type for JSON requests, not FormData
     if (options.body && typeof options.body === 'string') {
-      headers['Content-Type'] = 'application/json';
+      defaultHeaders['Content-Type'] = 'application/json';
     }
 
     try {
       const response = await fetch(`http://localhost:5000/api${endpoint}`, {
-        ...options,
         headers: {
-          ...headers,
+          ...defaultHeaders,
           ...options.headers
-        }
+        },
+        ...options
       });
       
-      // Handle authentication errors
       if (response.status === 401) {
-        console.error('Authentication failed - redirecting to login');
-        localStorage.clear();
+        // Token expired or invalid
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
         window.location.href = '/signup';
         return;
       }
       
       if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage;
-        try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error || errorJson.message || response.statusText;
-        } catch {
-          errorMessage = errorText || response.statusText;
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
       
       return response.json();
@@ -111,61 +99,41 @@ const Dashboard = () => {
     }
   };
 
-  // Initialize dashboard data
+  // Load user data from localStorage and API
   useEffect(() => {
-    initializeDashboard();
+    loadInitialData();
   }, []);
 
-  const initializeDashboard = async () => {
+  const loadInitialData = async () => {
     try {
-      // Check if user is authenticated
-      const token = localStorage.getItem('authToken');
-      const userData = localStorage.getItem('userData');
-      
-      if (!token) {
-        window.location.href = '/signup';
-        return;
-      }
-
-      // Set initial user data from localStorage
-      if (userData) {
-        try {
-          const parsedUserData = JSON.parse(userData);
-          setUser(parsedUserData);
-          setProfileForm({ 
-            name: parsedUserData.name || parsedUserData.displayName || "", 
-            email: parsedUserData.email || "" 
-          });
-        } catch (e) {
-          console.error('Error parsing user data from localStorage');
-        }
+      // Get user data from localStorage first
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
+        const userData = JSON.parse(storedUserData);
+        setUser(userData);
+        setProfileForm({ 
+          name: userData.name || userData.displayName || "", 
+          email: userData.email || "" 
+        });
       }
 
       // Load fresh data from API
-      await loadAllData();
-    } catch (error) {
-      console.error('Error initializing dashboard:', error);
-      setError('Failed to load dashboard. Please refresh the page.');
-    }
-  };
-
-  const loadAllData = async () => {
-    try {
-      await Promise.allSettled([
+      await Promise.all([
         loadUserData(),
         loadListings(),
-        loadAvailableListings(),
-        loadSwaps()
+        loadSwaps(),
+        loadAvailableListings()
       ]);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading initial data:', error);
+      setError('Failed to load dashboard data. Please refresh the page.');
     }
   };
 
   const loadUserData = async () => {
     try {
       const result = await apiCall('/users/profile');
-      if (result && result.success) {
+      if (result.success) {
         setUser(result.data);
         setProfileForm({ 
           name: result.data.name || "", 
@@ -177,39 +145,43 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+      // If API fails, keep using localStorage data
     }
   };
 
   const loadListings = async () => {
     try {
       const result = await apiCall('/listings');
-      if (result && result.success) {
+      if (result.success) {
         setListings(result.data || []);
       }
     } catch (error) {
       console.error('Error loading listings:', error);
+      setError('Failed to load your listings.');
     }
   };
 
   const loadAvailableListings = async () => {
     try {
       const result = await apiCall('/listings/available');
-      if (result && result.success) {
+      if (result.success) {
         setAvailableListings(result.data || []);
       }
     } catch (error) {
       console.error('Error loading available listings:', error);
+      // Don't show error for this as it's not critical
     }
   };
 
   const loadSwaps = async () => {
     try {
       const result = await apiCall('/swaps');
-      if (result && result.success) {
+      if (result.success) {
         setSwaps(result.data || []);
       }
     } catch (error) {
       console.error('Error loading swaps:', error);
+      // Don't show error for this as it's not critical
     }
   };
 
@@ -219,25 +191,19 @@ const Dashboard = () => {
       return;
     }
 
-    const originalPrice = parseFloat(formData.originalPrice);
-    if (isNaN(originalPrice) || originalPrice <= 0) {
-      return;
-    }
-
-    setPriceCalculating(true);
     try {
       const result = await apiCall('/listings/calculate-price', {
         method: 'POST',
         body: JSON.stringify({
           category: formData.category,
           brand: formData.brand || 'Generic',
-          originalPrice: originalPrice,
+          originalPrice: parseFloat(formData.originalPrice),
           purchaseDate: formData.purchaseDate,
           condition: formData.condition
         })
       });
 
-      if (result && result.success) {
+      if (result.success) {
         setListingForm(prev => ({
           ...prev,
           finalPrice: result.data.calculatedPrice,
@@ -246,8 +212,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error calculating price:', error);
-    } finally {
-      setPriceCalculating(false);
+      // Don't show error as this is automatic calculation
     }
   };
 
@@ -301,7 +266,7 @@ const Dashboard = () => {
         body: formData
       });
 
-      if (result && result.success) {
+      if (result.success) {
         setShowListingForm(false);
         resetForm();
         await loadListings();
@@ -337,7 +302,7 @@ const Dashboard = () => {
         })
       });
 
-      if (comparison && comparison.success) {
+      if (comparison.success) {
         setSwapComparison(comparison.data);
         setSelectedSwapItems({
           user: listings.find(l => l.id === userListingId),
@@ -363,7 +328,7 @@ const Dashboard = () => {
         })
       });
 
-      if (result && result.success) {
+      if (result.success) {
         setShowSwapInterface(false);
         setSwapComparison(null);
         await loadSwaps();
@@ -383,7 +348,7 @@ const Dashboard = () => {
         body: JSON.stringify({ action, response })
       });
 
-      if (result && result.success) {
+      if (result.success) {
         await loadSwaps();
       }
     } catch (error) {
@@ -451,7 +416,7 @@ const Dashboard = () => {
         body: formData
       });
 
-      if (result && result.success) {
+      if (result.success) {
         setShowProfileEdit(false);
         await loadUserData();
       }
@@ -464,7 +429,8 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
     window.location.href = '/';
   };
 
@@ -617,8 +583,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content Sections */}
       <div className="max-w-6xl mx-auto">
+        {/* My Listings Tab */}
         {tab === "listings" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.length === 0 ? (
@@ -692,6 +659,7 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* Available for Swap Tab */}
         {tab === "available" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {availableListings.length === 0 ? (
@@ -745,6 +713,7 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* Swaps Tab */}
         {tab === "swaps" && (
           <div className="bg-white rounded-2xl shadow p-6">
             <div className="flex gap-6 mb-4">
@@ -1054,17 +1023,10 @@ const Dashboard = () => {
 
                 {listingForm.finalPrice > 0 && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-semibold text-green-800">Calculated Price</span>
-                      {priceCalculating && (
-                        <RefreshCw className="h-4 w-4 animate-spin text-green-600" />
-                      )}
+                    <div className="text-2xl font-bold text-green-600 mb-3">
+                      Calculated: ${listingForm.finalPrice}
                     </div>
                     
-                    <div className="text-2xl font-bold text-green-600 mb-3">
-                      ${listingForm.finalPrice}
-                    </div>
-
                     {listingForm.priceFactors && (
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -1123,70 +1085,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Swap Interface Modal */}
-      {showSwapInterface && swapComparison && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl relative">
-            <button
-              type="button"
-              className="absolute top-3 right-3 text-stone-400 hover:text-red-500"
-              onClick={() => setShowSwapInterface(false)}
-            >
-              <X className="h-6 w-6" />
-            </button>
-            
-            <h3 className="text-xl font-bold mb-4">Swap Analysis</h3>
-
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="border rounded-lg p-4">
-                <h4 className="font-semibold mb-2">Your Item</h4>
-                <p className="text-sm">{swapComparison.initiatorListing.title}</p>
-                <div className="text-lg font-bold text-green-600">
-                  ${swapComparison.initiatorListing.value}
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <h4 className="font-semibold mb-2">Their Item</h4>
-                <p className="text-sm">{swapComparison.receiverListing.title}</p>
-                <div className="text-lg font-bold text-green-600">
-                  ${swapComparison.receiverListing.value}
-                </div>
-              </div>
-            </div>
-
-            {swapComparison.comparison.extraPayment > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <h4 className="font-semibold mb-2">Payment Required</h4>
-                <div className="text-lg font-bold text-blue-600">
-                  ${swapComparison.comparison.extraPayment}
-                </div>
-                <p className="text-sm text-stone-600">
-                  {swapComparison.comparison.paymentDirection === 'initiator_pays' 
-                    ? 'You need to pay extra' 
-                    : 'They need to pay extra'}
-                </p>
-              </div>
-            )}
-
-            <div className="flex gap-4">
-              <button
-                onClick={() => confirmSwapRequest('')}
-                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition"
-              >
-                Confirm Swap Request
-              </button>
-              <button
-                onClick={() => setShowSwapInterface(false)}
-                className="flex-1 border-2 border-stone-300 text-stone-600 py-3 rounded-xl font-semibold hover:bg-stone-50 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Profile Edit Modal */}
       {showProfileEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -1237,6 +1135,83 @@ const Dashboard = () => {
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Swap Interface Modal */}
+      {showSwapInterface && swapComparison && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl relative">
+            <button
+              type="button"
+              className="absolute top-3 right-3 text-stone-400 hover:text-red-500"
+              onClick={() => setShowSwapInterface(false)}
+            >
+              <X className="h-6 w-6" />
+            </button>
+            
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-orange-600" />
+              Swap Analysis
+            </h3>
+
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold text-stone-800 mb-2">Your Item</h4>
+                <img 
+                  src={selectedSwapItems.user?.image_url || "/api/placeholder/150/150"} 
+                  alt={selectedSwapItems.user?.title} 
+                  className="w-full h-32 object-cover rounded mb-2" 
+                />
+                <p className="text-sm font-medium">{selectedSwapItems.user?.title}</p>
+                <div className="text-lg font-bold text-green-600">
+                  ${swapComparison.comparison?.initiatorValue}
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold text-stone-800 mb-2">Their Item</h4>
+                <img 
+                  src={selectedSwapItems.partner?.image_url || "/api/placeholder/150/150"} 
+                  alt={selectedSwapItems.partner?.title} 
+                  className="w-full h-32 object-cover rounded mb-2" 
+                />
+                <p className="text-sm font-medium">{selectedSwapItems.partner?.title}</p>
+                <div className="text-lg font-bold text-green-600">
+                  ${swapComparison.comparison?.receiverValue}
+                </div>
+              </div>
+            </div>
+
+            {swapComparison.comparison?.extraPayment > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold mb-2">Payment Required</h4>
+                <div className="text-lg font-bold text-blue-600">
+                  ${swapComparison.comparison.extraPayment}
+                </div>
+                <p className="text-sm text-stone-600">
+                  {swapComparison.comparison.paymentDirection === 'initiator_pays' 
+                    ? 'You need to pay extra' 
+                    : 'They need to pay extra'}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => confirmSwapRequest('')}
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-500 text-white py-3 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-600 transition"
+              >
+                Request Swap
+              </button>
+              <button
+                onClick={() => setShowSwapInterface(false)}
+                className="flex-1 border-2 border-stone-300 text-stone-600 py-3 rounded-xl font-semibold hover:bg-stone-50 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
