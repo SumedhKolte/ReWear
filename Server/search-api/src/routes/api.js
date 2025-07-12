@@ -130,7 +130,7 @@ router.get('/types',
 );
 
 /**
- * ITEM MANAGEMENT ROUTES (if needed for your API)
+ * ITEM MANAGEMENT ROUTES
  */
 
 // Create new item - requires authentication
