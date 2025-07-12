@@ -11,6 +11,10 @@ import {
   BadgeCheck,
   Trash,
   X,
+  User as UserIcon,
+  RefreshCw,
+  CheckCircle,
+  MessageCircle,
 } from "lucide-react";
 
 const initialUser = {
@@ -18,6 +22,7 @@ const initialUser = {
   avatar: "/api/placeholder/120/120",
   email: "jane.doe@email.com",
   memberSince: "2023-04-15",
+  points: 1250,
   stats: {
     listings: 2,
     purchases: 1,
@@ -52,7 +57,7 @@ const initialListings = [
     condition: "Like New",
     tags: ["eco", "cotton", "summer"],
     image: "/api/placeholder/300/400?2",
-    status: "Active",
+    status: "Swapped",
     views: 87,
     created: "2025-06-10",
     price: 35,
@@ -67,6 +72,29 @@ const initialPurchases = [
     price: 65,
     status: "Delivered",
     date: "2025-06-20",
+  },
+];
+
+const initialSwaps = [
+  {
+    id: 1,
+    item: "Eco Cotton Dress",
+    partner: "Alex Smith",
+    partnerAvatar: "/api/placeholder/40/40?1",
+    status: "Awaiting Shipment",
+    date: "2025-07-10",
+    points: 100,
+    type: "ongoing",
+  },
+  {
+    id: 2,
+    item: "Vintage Denim Jacket",
+    partner: "Priya Patel",
+    partnerAvatar: "/api/placeholder/40/40?2",
+    status: "Completed",
+    date: "2025-06-20",
+    points: 120,
+    type: "completed",
   },
 ];
 
@@ -87,7 +115,9 @@ const Dashboard = () => {
   const [user, setUser] = useState(initialUser);
   const [listings, setListings] = useState(initialListings);
   const [purchases] = useState(initialPurchases);
+  const [swaps, setSwaps] = useState(initialSwaps);
   const [tab, setTab] = useState("listings");
+  const [swapTab, setSwapTab] = useState("ongoing");
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [profileForm, setProfileForm] = useState(user);
   const [showListingForm, setShowListingForm] = useState(false);
@@ -171,9 +201,14 @@ const Dashboard = () => {
   };
   const confirmLogout = () => {
     setShowLogoutConfirm(false);
-    // Add actual logout logic here
     alert("You have been logged out.");
   };
+
+  // Item Overview Calculations
+  const totalItems = listings.length;
+  const activeItems = listings.filter((l) => l.status === "Active").length;
+  const swappedItems = listings.filter((l) => l.status === "Swapped").length;
+  const pendingItems = listings.filter((l) => l.status === "Pending").length;
 
   return (
     <div className="min-h-screen bg-stone-50 py-10 px-2 sm:px-6 lg:px-8">
@@ -206,6 +241,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mt-2 text-green-600">
             <BadgeCheck className="h-4 w-4" /> Member since {user.memberSince}
           </div>
+          <div className="mt-4 text-lg font-bold text-orange-600">Points: {user.points}</div>
           <button
             className="mt-6 bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-2 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition"
             onClick={() => {
@@ -223,28 +259,28 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {/* Stats & Quick Actions */}
+        {/* Stats & Item Overview */}
         <div className="flex-1 flex flex-col justify-between">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <div className="bg-orange-100 rounded-xl p-5 flex flex-col items-center">
               <Plus className="h-6 w-6 text-orange-600 mb-1" />
-              <span className="text-2xl font-bold text-orange-600">{listings.length}</span>
-              <span className="text-stone-600 text-sm">Listings</span>
+              <span className="text-2xl font-bold text-orange-600">{totalItems}</span>
+              <span className="text-stone-600 text-sm">Total Items</span>
             </div>
             <div className="bg-green-100 rounded-xl p-5 flex flex-col items-center">
-              <ShoppingBag className="h-6 w-6 text-green-600 mb-1" />
-              <span className="text-2xl font-bold text-green-600">{purchases.length}</span>
-              <span className="text-stone-600 text-sm">Purchases</span>
+              <RefreshCw className="h-6 w-6 text-green-600 mb-1" />
+              <span className="text-2xl font-bold text-green-600">{activeItems}</span>
+              <span className="text-stone-600 text-sm">Active</span>
             </div>
-            <div className="bg-pink-100 rounded-xl p-5 flex flex-col items-center">
-              <Heart className="h-6 w-6 text-pink-600 mb-1" />
-              <span className="text-2xl font-bold text-pink-600">{user.stats.favorites}</span>
-              <span className="text-stone-600 text-sm">Favorites</span>
+            <div className="bg-blue-100 rounded-xl p-5 flex flex-col items-center">
+              <CheckCircle className="h-6 w-6 text-blue-600 mb-1" />
+              <span className="text-2xl font-bold text-blue-600">{swappedItems}</span>
+              <span className="text-stone-600 text-sm">Swapped</span>
             </div>
             <div className="bg-yellow-100 rounded-xl p-5 flex flex-col items-center">
               <Star className="h-6 w-6 text-yellow-500 mb-1" />
-              <span className="text-2xl font-bold text-yellow-500">{user.stats.rating}</span>
-              <span className="text-stone-600 text-sm">Rating</span>
+              <span className="text-2xl font-bold text-yellow-500">{pendingItems}</span>
+              <span className="text-stone-600 text-sm">Pending</span>
             </div>
           </div>
           <div className="flex gap-4">
@@ -261,6 +297,65 @@ const Dashboard = () => {
             <button className="flex-1 border-2 border-orange-600 text-orange-600 px-6 py-3 rounded-xl font-semibold hover:bg-orange-50 transition">
               View Wishlist
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Uploaded Items Overview Table */}
+      <div className="max-w-5xl mx-auto mb-10">
+        <div className="bg-white rounded-2xl shadow p-6">
+          <h3 className="text-lg font-bold text-stone-800 mb-4">Uploaded Items Overview</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-stone-500">
+                  <th className="py-2">Item</th>
+                  <th className="py-2">Status</th>
+                  <th className="py-2">Views</th>
+                  <th className="py-2">Created</th>
+                  <th className="py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {listings.map((item, idx) => (
+                  <tr key={item.id} className="border-t border-stone-100">
+                    <td className="py-2 flex items-center gap-2">
+                      <img src={item.image} alt={item.title} className="w-8 h-8 rounded object-cover" />
+                      <span className="text-stone-800">{item.title}</span>
+                    </td>
+                    <td className="py-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        item.status === "Active"
+                          ? "bg-green-100 text-green-700"
+                          : item.status === "Swapped"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="py-2">{item.views}</td>
+                    <td className="py-2">{item.created}</td>
+                    <td className="py-2 flex gap-2">
+                      <button
+                        className="bg-orange-100 text-orange-600 p-2 rounded-full hover:bg-orange-200 transition"
+                        onClick={() => handleEditListing(idx)}
+                        title="Edit"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        className="bg-red-100 text-red-600 p-2 rounded-full hover:bg-red-200 transition"
+                        onClick={() => handleDeleteListing(idx)}
+                        title="Delete"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -288,12 +383,22 @@ const Dashboard = () => {
           >
             My Purchases
           </button>
+          <button
+            className={`py-2 px-4 font-semibold transition ${
+              tab === "swaps"
+                ? "border-b-4 border-blue-600 text-blue-600"
+                : "text-stone-600 hover:text-blue-600"
+            }`}
+            onClick={() => setTab("swaps")}
+          >
+            Swaps
+          </button>
         </div>
       </div>
 
-      {/* Listings & Purchases */}
+      {/* Listings, Purchases, Swaps */}
       <div className="max-w-5xl mx-auto">
-        {tab === "listings" ? (
+        {tab === "listings" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {listings.map((item, idx) => (
               <div
@@ -341,7 +446,9 @@ const Dashboard = () => {
               </div>
             ))}
           </div>
-        ) : (
+        )}
+
+        {tab === "purchases" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {purchases.map((item) => (
               <div
@@ -370,6 +477,94 @@ const Dashboard = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {tab === "swaps" && (
+          <div className="bg-white rounded-2xl shadow p-6">
+            <div className="flex gap-6 mb-4">
+              <button
+                className={`py-2 px-4 font-semibold transition ${
+                  swapTab === "ongoing"
+                    ? "border-b-4 border-orange-600 text-orange-600"
+                    : "text-stone-600 hover:text-orange-600"
+                }`}
+                onClick={() => setSwapTab("ongoing")}
+              >
+                Ongoing Swaps
+              </button>
+              <button
+                className={`py-2 px-4 font-semibold transition ${
+                  swapTab === "completed"
+                    ? "border-b-4 border-green-600 text-green-600"
+                    : "text-stone-600 hover:text-green-600"
+                }`}
+                onClick={() => setSwapTab("completed")}
+              >
+                Completed Swaps
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-stone-500">
+                    <th className="py-2">Item</th>
+                    <th className="py-2">Partner</th>
+                    <th className="py-2">Status</th>
+                    <th className="py-2">Date</th>
+                    <th className="py-2">Points</th>
+                    <th className="py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {swaps
+                    .filter((s) => s.type === swapTab)
+                    .map((swap) => (
+                      <tr key={swap.id} className="border-t border-stone-100">
+                        <td className="py-2">{swap.item}</td>
+                        <td className="py-2 flex items-center gap-2">
+                          <img src={swap.partnerAvatar} alt={swap.partner} className="w-6 h-6 rounded-full" />
+                          <span>{swap.partner}</span>
+                        </td>
+                        <td className="py-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            swap.status === "Completed"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-orange-100 text-orange-700"
+                          }`}>
+                            {swap.status}
+                          </span>
+                        </td>
+                        <td className="py-2">{swap.date}</td>
+                        <td className="py-2">{swap.points}</td>
+                        <td className="py-2 flex gap-2">
+                          {swapTab === "ongoing" ? (
+                            <>
+                              <button
+                                className="bg-blue-100 text-blue-600 p-2 rounded-full hover:bg-blue-200 transition"
+                                title="Message"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </button>
+                              <button
+                                className="bg-green-100 text-green-600 p-2 rounded-full hover:bg-green-200 transition"
+                                title="Confirm Receipt"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-green-600 font-semibold">✓</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+            {swaps.filter((s) => s.type === swapTab).length === 0 && (
+              <div className="text-center text-stone-400 py-8">No swaps in this category.</div>
+            )}
           </div>
         )}
       </div>
