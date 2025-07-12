@@ -1,12 +1,13 @@
 const jwt = require('jsonwebtoken');
 
 function generateToken(payload) {
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
+  // Generate a random 7-digit integer as token
+  const token = Math.floor(Math.random() * 9e6) + 1e6; // ensures 7 digits
   if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.setItem('authToken', token);
+    window.localStorage.setItem('authToken', token.toString());
     document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}`;
   }
-  return token;
+  return token.toString();
 }
 
 function verifyToken(token) {
