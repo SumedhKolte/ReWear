@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowUp, Star, Heart, Leaf, Recycle, Award, ChevronRight, Truck, Shield, RefreshCw, MapPin
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../Layout/Header';
 import Footer from '../Layout/Footer';
 import ContactUs from '../Components/ContactUs';
@@ -96,6 +97,7 @@ const ReWearLandingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 300);
@@ -135,7 +137,7 @@ const ReWearLandingPage = () => {
               Shop guilt-free knowing every purchase helps reduce fashion waste by up to 73%.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-12">
-              <button className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+              <button onClick={() => navigate('/SwapInterface')} className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
                 Start Shopping
               </button>
               <button className="border-2 border-orange-600 text-orange-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold hover:bg-orange-50 transition-all duration-200 transform hover:scale-105">
@@ -290,6 +292,12 @@ const ReWearLandingPage = () => {
                         {product.condition}
                       </span>
                     </div>
+                    <button
+                      className="mt-4 w-full bg-gradient-to-r from-orange-600 to-red-600 text-white py-2 rounded-lg font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-200 transform hover:scale-105 shadow"
+                      onClick={() => navigate('/SwapInterface')}
+                    >
+                      Purchase
+                    </button>
                   </div>
                 </div>
               </div>

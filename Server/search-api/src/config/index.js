@@ -85,7 +85,10 @@ class ConfigManager {
         port: parseInt(process.env.PORT),
         version: process.env.npm_package_version || '1.0.0'
       },
-
+      // Add this block at the bottom of the return object:
+      security: {
+        helmetEnabled: process.env.HELMET_ENABLED === 'true' // or default to true
+      },
       // Database (optimized for Items schema)
       database: {
         host: process.env.RDS_HOSTNAME,
