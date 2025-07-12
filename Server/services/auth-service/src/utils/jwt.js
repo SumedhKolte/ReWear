@@ -1,7 +1,11 @@
 const jwt = require('jsonwebtoken');
 
 function generateToken(payload) {
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem('authToken', token);
+  }
+  return token;
 }
 
 function verifyToken(token) {
