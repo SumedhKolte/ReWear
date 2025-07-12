@@ -24,6 +24,7 @@ exports.signup = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
+    const userIdStr = uuidv4().replace(/-/g, '').slice(0, 7);
     const user = {
       userId: uuidv4(), // Keep as UUID string
       email: email.toLowerCase().trim(),

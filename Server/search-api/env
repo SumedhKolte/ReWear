@@ -5,18 +5,18 @@
 # Application Configuration
 NODE_ENV=production
 PORT=3000
-APP_NAME=items-search-api
+# APP_NAME=items-search-api
 
 # ============================================================================
 # Database Configuration (PostgreSQL RDS)
 # ============================================================================
 
 # RDS Connection Details
-RDS_HOSTNAME=your-rds-endpoint.region.rds.amazonaws.com
+RDS_HOSTNAME= http://databaseproducts.cg5y8mq8g8nz.us-east-1.rds.amazonaws.com
 RDS_PORT=5432
-RDS_DB_NAME=items_search_db
-RDS_USERNAME=items_api_user
-RDS_PASSWORD=your_secure_database_password
+RDS_DB_NAME=Products
+RDS_USERNAME=admin49
+RDS_PASSWORD=harmocare26
 
 # SSL Certificate for RDS (optional)
 RDS_CA_CERT=/path/to/rds-ca-2019-root.pem
@@ -35,9 +35,9 @@ DB_MAX_USES=7500
 # ============================================================================
 
 # Redis Connection Details
-REDIS_HOST=your-elasticache-endpoint.cache.amazonaws.com
+REDIS_HOST=redis-cache-a0dulf.serverless.use1.cache.amazonaws.com:6379
 REDIS_PORT=6379
-REDIS_PASSWORD=your_redis_password
+REDIS_PASSWORD=harmocare26
 REDIS_DB=0
 REDIS_TLS=true
 REDIS_KEY_PREFIX=items-api:
