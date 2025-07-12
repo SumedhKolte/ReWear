@@ -7,6 +7,7 @@ import ItemListingPage from '../Pages/itemlisting';
 import UserDashboard from "../Pages/userdashboard"
 import ProductDetailPage from "../Pages/productdetailspage"
 import AdminPanel from "../Pages/adminpage"
+import SwapInterface from "../Pages/Swapinterface"
 
 
 
@@ -20,6 +21,7 @@ export default function AppRoutes() {
       <Route path="/UserDashboard" element={<UserDashboard />} />    
       <Route path="/ProductDetailPage" element={<ProductDetailPage />} />    
       <Route path="/AdminPanel" element={<AdminPanel />} />    
+      <Route path="/SwapInterface" element={<SwapInterface />} />    
     </Routes>
    
   );

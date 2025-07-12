@@ -52,6 +52,20 @@ class Listing {
     return result.rows;
   }
 
+  static async getOverview(userId) {
+    const query = `
+      SELECT 
+        id, title, status, views, 
+        TO_CHAR(created_at, 'YYYY-MM-DD') as created,
+        image_url, final_price as price, category, condition
+      FROM listings 
+      WHERE user_id = $1 
+      ORDER BY created_at DESC
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+  }
+
   static async create(listingData) {
     const {
       userId, title, description, category, subcategory, brand, type, size,
@@ -114,171 +128,6 @@ class Listing {
   static async incrementViews(id) {
     const query = 'UPDATE listings SET views = views + 1 WHERE id = $1 RETURNING views, id';
     const result = await pool.query(query, [id]);
-    return result.rows[0];
-  }
-
-  // NEW METHOD: Get overview for dashboard
-  static async getOverview(userId) {
-    const query = `
-      SELECT 
-        id, title, status, views, 
-        TO_CHAR(created_at, 'YYYY-MM-DD') as created,
-        image_url, final_price as price, category, condition
-      FROM listings 
-      WHERE user_id = $1 
-      ORDER BY created_at DESC
-    `;
-    const result = await pool.query(query, [userId]);
-    return result.rows;
-  }
-
-  // NEW METHOD: Search listings with filters
-  static async search(searchParams) {
-    const {
-      query,
-      category,
-      minPrice,
-      maxPrice,
-      condition,
-      size,
-      limit,
-      offset,
-      excludeUserId
-    } = searchParams;
-
-    let sqlQuery = `
-      SELECT l.*, u.name as owner_name, u.avatar_url as owner_avatar
-      FROM listings l
-      JOIN users u ON l.user_id = u.id
-      WHERE l.status = 'Active'
-    `;
-    
-    const params = [];
-    let paramCount = 0;
-
-    // Exclude current user's listings
-    if (excludeUserId) {
-      paramCount++;
-      sqlQuery += ` AND l.user_id != $${paramCount}`;
-      params.push(excludeUserId);
-    }
-
-    // Text search
-    if (query) {
-      paramCount++;
-      sqlQuery += ` AND (
-        l.title ILIKE $${paramCount} OR 
-        l.description ILIKE $${paramCount} OR 
-        l.brand ILIKE $${paramCount} OR 
-        $${paramCount} = ANY(l.tags)
-      )`;
-      params.push(`%${query}%`);
-    }
-
-    // Category filter
-    if (category) {
-      paramCount++;
-      sqlQuery += ` AND l.category = $${paramCount}`;
-      params.push(category);
-    }
-
-    // Price range filter
-    if (minPrice) {
-      paramCount++;
-      sqlQuery += ` AND l.final_price >= $${paramCount}`;
-      params.push(parseFloat(minPrice));
-    }
-
-    if (maxPrice) {
-      paramCount++;
-      sqlQuery += ` AND l.final_price <= $${paramCount}`;
-      params.push(parseFloat(maxPrice));
-    }
-
-    // Condition filter
-    if (condition) {
-      paramCount++;
-      sqlQuery += ` AND l.condition = $${paramCount}`;
-      params.push(condition);
-    }
-
-    // Size filter
-    if (size) {
-      paramCount++;
-      sqlQuery += ` AND l.size = $${paramCount}`;
-      params.push(size);
-    }
-
-    // Order and pagination
-    sqlQuery += ` ORDER BY l.created_at DESC`;
-    
-    if (limit) {
-      paramCount++;
-      sqlQuery += ` LIMIT $${paramCount}`;
-      params.push(limit);
-    }
-
-    if (offset) {
-      paramCount++;
-      sqlQuery += ` OFFSET $${paramCount}`;
-      params.push(offset);
-    }
-
-    const result = await pool.query(sqlQuery, params);
-    return result.rows;
-  }
-
-  // NEW METHOD: Get trending listings (most viewed)
-  static async getTrending(limit = 10) {
-    const query = `
-      SELECT l.*, u.name as owner_name, u.avatar_url as owner_avatar
-      FROM listings l
-      JOIN users u ON l.user_id = u.id
-      WHERE l.status = 'Active' AND l.views > 0
-      ORDER BY l.views DESC, l.created_at DESC
-      LIMIT $1
-    `;
-    const result = await pool.query(query, [limit]);
-    return result.rows;
-  }
-
-  // NEW METHOD: Get recently added listings
-  static async getRecent(limit = 10, excludeUserId = null) {
-    let query = `
-      SELECT l.*, u.name as owner_name, u.avatar_url as owner_avatar
-      FROM listings l
-      JOIN users u ON l.user_id = u.id
-      WHERE l.status = 'Active'
-    `;
-    
-    const params = [];
-    if (excludeUserId) {
-      query += ' AND l.user_id != $1';
-      params.push(excludeUserId);
-    }
-    
-    query += ' ORDER BY l.created_at DESC LIMIT $' + (params.length + 1);
-    params.push(limit);
-    
-    const result = await pool.query(query, params);
-    return result.rows;
-  }
-
-  // NEW METHOD: Get user statistics
-  static async getUserStats(userId) {
-    const query = `
-      SELECT 
-        COUNT(*) as total_listings,
-        COUNT(CASE WHEN status = 'Active' THEN 1 END) as active_listings,
-        COUNT(CASE WHEN status = 'Swapped' THEN 1 END) as swapped_listings,
-        COUNT(CASE WHEN status = 'Pending' THEN 1 END) as pending_listings,
-        COALESCE(SUM(views), 0) as total_views,
-        COALESCE(AVG(views), 0) as avg_views,
-        COALESCE(AVG(final_price), 0) as avg_price
-      FROM listings 
-      WHERE user_id = $1
-    `;
-    const result = await pool.query(query, [userId]);
     return result.rows[0];
   }
 }

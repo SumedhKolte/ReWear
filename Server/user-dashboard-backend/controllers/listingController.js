@@ -39,6 +39,20 @@ const listingController = {
     }
   },
 
+  async getListingsOverview(req, res) {
+    try {
+      const overview = await Listing.getOverview(req.user.id);
+      
+      res.json({
+        success: true,
+        data: overview
+      });
+    } catch (error) {
+      console.error('Get listings overview error:', error);
+      res.status(500).json({ error: 'Failed to fetch listings overview' });
+    }
+  },
+
   async calculatePrice(req, res) {
     try {
       const priceData = PriceCalculatorService.calculatePrice(req.body);
@@ -164,12 +178,10 @@ const listingController = {
     }
   },
 
-  // NEW METHOD: Increment view count
   async incrementViews(req, res) {
     try {
       const { id } = req.params;
       
-      // Validate that the listing exists
       const listing = await Listing.findById(id);
       if (!listing) {
         return res.status(404).json({ error: 'Listing not found' });
@@ -188,87 +200,6 @@ const listingController = {
     } catch (error) {
       console.error('Increment views error:', error);
       res.status(500).json({ error: 'Failed to update view count' });
-    }
-  },
-
-  // NEW METHOD: Get listing overview for dashboard
-  async getListingsOverview(req, res) {
-    try {
-      const overview = await Listing.getOverview(req.user.id);
-      
-      res.json({
-        success: true,
-        data: overview
-      });
-    } catch (error) {
-      console.error('Get listings overview error:', error);
-      res.status(500).json({ error: 'Failed to fetch listings overview' });
-    }
-  },
-
-  // NEW METHOD: Get single listing by ID (for public viewing)
-  async getListingById(req, res) {
-    try {
-      const { id } = req.params;
-      const listing = await Listing.findById(id);
-      
-      if (!listing) {
-        return res.status(404).json({ error: 'Listing not found' });
-      }
-
-      // Increment view count when someone views the listing
-      await Listing.incrementViews(id);
-      
-      res.json({
-        success: true,
-        data: listing
-      });
-    } catch (error) {
-      console.error('Get listing by ID error:', error);
-      res.status(500).json({ error: 'Failed to fetch listing' });
-    }
-  },
-
-  // NEW METHOD: Search listings
-  async searchListings(req, res) {
-    try {
-      const { 
-        query, 
-        category, 
-        minPrice, 
-        maxPrice, 
-        condition, 
-        size, 
-        page = 1, 
-        limit = 20 
-      } = req.query;
-      
-      const offset = (page - 1) * limit;
-      
-      const listings = await Listing.search({
-        query,
-        category,
-        minPrice,
-        maxPrice,
-        condition,
-        size,
-        limit,
-        offset,
-        excludeUserId: req.user?.id // Exclude current user's listings if authenticated
-      });
-      
-      res.json({
-        success: true,
-        data: listings,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: listings.length
-        }
-      });
-    } catch (error) {
-      console.error('Search listings error:', error);
-      res.status(500).json({ error: 'Failed to search listings' });
     }
   }
 };
